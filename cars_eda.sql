@@ -73,13 +73,14 @@ with model_stats as (
 select vi.make_name, vi.model_name, 
 count(*) filter( where si.price_nom = 1) as occurences_high,
 count(*) filter( where si.price_nom = 1) * 1.0 / count(*) as ratio_high,
+count(*) filter( where si.price_nom = 0) as occurences_low,
 count(*) as total_count
 from vehicle_info vi 
 join sale_info si on vi.vin=si.vin
 group by vi.make_name, vi.model_name
 order by ratio_high desc
 )
-select make_name, model_name, occurences_high, ratio_high, total_count
+select make_name, model_name, occurences_high, ratio_high, occurences_low, total_count
 from model_stats
 order by ratio_high desc;
 
@@ -102,10 +103,26 @@ where( rbm.model_name in(
 'Gladiator',
 'Tahoe',
 'XC90',
-'Sierro 1500');
-
-
+'Sierro 1500')
 )
 group by vi.make_name, vi.model_name, si.price_nom 
 ;
+
+
+
+
+
+select si.price_nom , vi.model_name, vi.make_name,
+round(avg(si.daysonmarket), 2) as avg_daysonmarket,
+MIN(si.daysonmarket) as min_daysonmarket,
+max(si.daysonmarket) as max_daysonmarket,
+count(vi.model_name) as model_count
+from vehicle_info vi
+join sale_info si  on vi.vin = si.vin
+join analysis.ratios_by_model rbm on vi.model_name = rbm.model_name
+where rbm.occurences_high > 30 and rbm.occurences_low > 30
+group by vi.make_name , vi.model_name, si.price_nom
+order by vi.make_name desc;
+
+
 
